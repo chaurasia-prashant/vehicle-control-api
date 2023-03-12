@@ -6,23 +6,23 @@ class UserSchema(BaseModel):
     username: str 
     email: str
     password: str
-    empID: str
+    empId: str
     department: str
     phoneNumber: str
-    uid: str = Field(default= secrets.token_urlsafe(16))
+    uid: str
     
     class Config:
         orm_mode = True
         
 class EmployeeIdSchema(BaseModel):
-    empID: str
+    empId: str
     
     class Config:
         orm_mode = True  
            
         
 class UserLoginSchema(BaseModel):
-    empID: str = Field(default= None)
+    empId: str = Field(default= None)
     password: str = Field(default= None)
     
     class Config:

@@ -13,7 +13,7 @@ from sqlalchemy.sql.expression import literal
 from app.schema.userSchema import UserSchema, EmployeeIdSchema, UserLoginSchema
 from app.schema.bookingSchema import vehicleBookingByUser
 # Modals
-from app.modals.userModal import Accounts, EmployeeId
+from app.modals.userModal import Accounts, EmployeeId, BookingModel
 
 from app.auth.jwt_handler import signJWT
 from app.auth.jwt_bearer import jwtBearer
@@ -44,12 +44,24 @@ def get_db():
 async def root():
     return {"message": "hello world"}
 
-  
-@app.post('/userSignup/', response_model=UserSchema)
-async def user(user:UserSchema):
+@app.post("/userLogin")
+async def checkUser(loginDetail: UserLoginSchema= Body(default =None)):
+    try: 
+        response = userInDatabase(loginDetail)         
+        if response[0]:
+            user = response[1]
+            return user
+        else:
+            return 404
+    except Exception as e:
+        return e 
+    
+    
+@app.post('/userSignup/')
+def user(user:UserSchema= Body(default =None)):
     try:
         db_accounts = Accounts(
-            empId = user.empID,
+            empId = user.empId,
             username = user.username,
             email = user.email,
             password = user.password,
@@ -58,35 +70,29 @@ async def user(user:UserSchema):
             uid = user.uid
             )
         db_EmployeeIdList = EmployeeId(
-            empId= user.empID
+            empId= user.empId
             )
         db.session.add(db_EmployeeIdList)
         db.session.add(db_accounts)
         db.session.commit()
-    except Exception as e:
-        return e
+        return True
+    except :
+        return 404
+        
+        
 def userInDatabase(data: UserLoginSchema):
     try:
         user = db.session.scalars(
-            select(Accounts).where(Accounts.empId== data.empID)).first()
-        if user != None and user.password == data.password:
-            return True
-        else: return False
+            select(Accounts).where(Accounts.empId== data.empId)).first()
+        if user.password == data.password:
+            return [True, user]
+        else: 
+            return [False]
     except Exception as e :
         print(e)
 
 
-@app.post("/userLogin", response_model= UserLoginSchema)
-async def checkUser(loginDetail: UserLoginSchema,db:Session = Depends(get_db)):
-    try:        
-        if userInDatabase(loginDetail):
-            print("successfully logged in")
-            return True
-        else:
-            print("Not a registered user")
-            return False
-    except Exception as e:
-        return e  
+ 
     
 @app.get("/allId")
 async def checkUser(db:Session = Depends(get_db)):
@@ -100,8 +106,85 @@ async def checkUser(db:Session = Depends(get_db)):
         return allId
     except Exception as e:
         return e 
-    
 
+@app.post('/vehicleBooking/')
+async def user(data:vehicleBookingByUser= Body(default =None)):
+    try:
+        db_vehicleBooking = BookingModel(
+            empId= data.empId,
+            empUsername= data.empUsername,
+            userDepartment= data.userDepartment,
+            tripDate = data.tripDate,
+            startLocation= data.startLocation,
+            destination= data.destination,
+            startTime= data.startTime,
+            endTime= data.endTime,
+            bookingNumber= data.bookingNumber,
+            vehicleAlloted= data.vehicleAlloted,
+            vehicleNumber= data.vehicleNumber,
+            tripStatus= data.tripStatus,
+            tripCompleted= data.tripCompleted,
+            tripCanceled= data.tripCanceled,
+            reason =data.reason,
+            remark = data.remark,
+            )
+        db.session.add(db_vehicleBooking)
+        db.session.commit()
+    except Exception as e:
+        return e
+    
+@app.post('/userBookings/{userId}')
+async def user(userId : str):
+    try:
+        res = []
+        allBooking = db.session.query(BookingModel).all()   
+        for booking in allBooking:
+            if booking.empId == userId:
+                res.append(booking)
+        if allBooking != "null":
+            print("booking exist")
+        else:
+            print("booking not found")
+        
+        return res
+    except Exception as e:
+        return e
+
+ 
+     
+@app.put('/approveRequest/{bookingId}')
+async def approveUserRequest(bookingId,data: vehicleBookingByUser):
+    try:
+        booking = db.session.query(BookingModel).filter(BookingModel.bookingNumber == bookingId)
+        if not booking.first():
+            return "error" 
+        booking.update({
+            "tripStatus": True,
+            "remark": data.remark
+        })
+        db.session.commit()
+        return{
+        "code":"success",
+        "message":"approval made"}
+    except Exception as e:
+        return e
+     
+@app.put('/rejectRequest/{bookingId}')
+async def rejectUserRequest(bookingId,data: vehicleBookingByUser):
+    try:
+        booking = db.session.query(BookingModel).filter(BookingModel.bookingNumber == bookingId)
+        if not booking.first():
+            return "error" 
+        booking.update({
+            "tripCanceled": True,
+            "remark": data.remark
+        })
+        db.session.commit()
+        return{
+        "code":"success",
+        "message":"donation made"}
+    except Exception as e:
+        return e
 
 
 
@@ -152,7 +235,7 @@ if __name__ == "__main__":
 #     try:
 #         response = check_user(user)
 #         if response[0]:
-#             # return signJWT(user.empID)
+#             # return signJWT(user.empId)
 #             return response[1]
 #         else:
 #             return 404
@@ -164,13 +247,13 @@ if __name__ == "__main__":
 # @app.post("/user/signup", tags=["user"])
 # def user_signup(user:UserSchema = Body(default=None)):
 #     users.append(user)
-#     return signJWT(user.empID)
+#     return signJWT(user.empId)
 
 # def check_user(data: UserLoginSchema ):
 #     try:
 #         currentUserData : UserSchema
 #         for user in users:
-#             if user.empID == data.empID and user.password == data.password:
+#             if user.empId == data.empId and user.password == data.password:
 #                 currentUserData =  user
 #                 return [True,currentUserData]
 #                 # return True
