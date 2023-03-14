@@ -11,7 +11,7 @@ from sqlalchemy import select
 from sqlalchemy.sql.expression import literal
 # Schemas
 from app.schema.userSchema import UserSchema, EmployeeIdSchema, UserLoginSchema
-from app.schema.bookingSchema import vehicleBookingByUser
+from app.schema.bookingSchema import approveSchema, vehicleBookingByUser
 # Modals
 from app.modals.userModal import Accounts, EmployeeId, BookingModel
 
@@ -89,7 +89,7 @@ def userInDatabase(data: UserLoginSchema):
         else: 
             return [False]
     except Exception as e :
-        print(e)
+        return [False,e]
 
 
  
@@ -133,7 +133,7 @@ async def user(data:vehicleBookingByUser= Body(default =None)):
     except Exception as e:
         return e
     
-@app.post('/userBookings/{userId}')
+@app.get('/userBookings/{userId}/')
 async def user(userId : str):
     try:
         res = []
@@ -150,16 +150,30 @@ async def user(userId : str):
     except Exception as e:
         return e
 
- 
+@app.get("/allBookingRequests/")
+async def checkUser(db:Session = Depends(get_db)):
+    try:
+        allRequest = db.query(BookingModel).all()
+        if allRequest != "null":
+            print("user exist")
+        else:
+            print("not found")
+        
+        return allRequest
+    except Exception as e:
+        return e 
      
 @app.put('/approveRequest/{bookingId}')
-async def approveUserRequest(bookingId,data: vehicleBookingByUser):
+async def approveUserRequest(bookingId,data: approveSchema):
     try:
         booking = db.session.query(BookingModel).filter(BookingModel.bookingNumber == bookingId)
         if not booking.first():
             return "error" 
         booking.update({
-            "tripStatus": True,
+            "vehicleAlloted": data.vehicleAlloted,
+            "vehicleNumber": data.vehicleNumber,
+            "tripStatus": data.tripStatus,
+            "tripCanceled": data.tripCanceled,
             "remark": data.remark
         })
         db.session.commit()
@@ -170,13 +184,16 @@ async def approveUserRequest(bookingId,data: vehicleBookingByUser):
         return e
      
 @app.put('/rejectRequest/{bookingId}')
-async def rejectUserRequest(bookingId,data: vehicleBookingByUser):
+async def rejectUserRequest(bookingId,data: approveSchema):
     try:
         booking = db.session.query(BookingModel).filter(BookingModel.bookingNumber == bookingId)
         if not booking.first():
             return "error" 
         booking.update({
-            "tripCanceled": True,
+            "vehicleAlloted": data.vehicleAlloted,
+            "vehicleNumber": data.vehicleNumber,
+            "tripStatus": data.tripStatus,
+            "tripCanceled": data.tripCanceled,
             "remark": data.remark
         })
         db.session.commit()

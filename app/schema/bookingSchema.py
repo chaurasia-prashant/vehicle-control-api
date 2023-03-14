@@ -23,6 +23,16 @@ class vehicleBookingByUser(BaseModel):
     
     class Config:
         orm_mode = True
+        
+class approveSchema(BaseModel):
+    vehicleAlloted: str= Field(default= None)
+    vehicleNumber: str= Field(default= None)
+    tripStatus: bool= Field(default= False)
+    tripCanceled: bool= Field(default= False)
+    remark: str= Field(default= None)
+    
+    class Config:
+        orm_mode = True
     
     
     
