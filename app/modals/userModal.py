@@ -12,9 +12,14 @@ class Accounts(Base):
     empId = Column(String, primary_key=True, index=True, unique=True)
     username = Column(String)
     email = Column(String)
-    password = Column(String)
+    password = Column(String(600))
     department = Column(String)
     phoneNumber = Column(String)
+    isAuthorized= Column(Boolean)
+    verifyPhoneNumber= Column(Boolean)
+    verifyEmail= Column(Boolean)
+    isOwner= Column(Boolean)
+    isAdmin= Column(Boolean)
     uid = Column(String)
 
 

@@ -9,6 +9,11 @@ class UserSchema(BaseModel):
     empId: str
     department: str
     phoneNumber: str
+    isAuthorized: bool= Field(default= False)
+    verifyPhoneNumber:bool= Field(default= False)
+    verifyEmail:bool= Field(default= False)
+    isOwner: bool= Field(default= False)
+    isAdmin:bool= Field(default= False)
     uid: str
     
     class Config:

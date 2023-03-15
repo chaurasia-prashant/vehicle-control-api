@@ -67,6 +67,11 @@ def user(user:UserSchema= Body(default =None)):
             password = user.password,
             department = user.department,
             phoneNumber = user.phoneNumber,
+            isAuthorized= user.isAuthorized,
+            verifyPhoneNumber= user.verifyPhoneNumber,
+            verifyEmail= user.verifyEmail,
+            isOwner= user.isOwner,
+            isAdmin= user.isAdmin,
             uid = user.uid
             )
         db_EmployeeIdList = EmployeeId(
