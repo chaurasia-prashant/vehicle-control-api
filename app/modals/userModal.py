@@ -1,4 +1,4 @@
-from sqlalchemy import Column, DateTime, ForeignKey, Integer, String, Float, Boolean
+from sqlalchemy import Column, DateTime, ForeignKey, String, Boolean, PickleType,JSON
 from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.orm import relationship
 from sqlalchemy.sql import func
@@ -34,7 +34,7 @@ class BookingModel(Base):
     empId = Column(String)
     empUsername = Column(String)
     userDepartment = Column(String)
-    tripDate = Column(DateTime)
+    tripDate = Column(String)
     startLocation = Column(String)
     destination = Column(String)
     startTime = Column(String)
@@ -49,3 +49,10 @@ class BookingModel(Base):
     
     # __allow_unmapped__ = True
 
+
+class VehicleModel(Base):
+    __tablename__ = 'vehicle_Details'
+    vehicleNumber = Column(String, primary_key=True, index=True)
+    vehiclePhoneNumber = Column(String)
+    bookedTime = Column(JSON)
+    

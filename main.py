@@ -11,9 +11,9 @@ from sqlalchemy import select
 from sqlalchemy.sql.expression import literal
 # Schemas
 from app.schema.userSchema import UserSchema, EmployeeIdSchema, UserLoginSchema
-from app.schema.bookingSchema import approveSchema, vehicleBookingByUser
+from app.schema.bookingSchema import approveSchema, vehicleBookingByUser, vehicleSchema
 # Modals
-from app.modals.userModal import Accounts, EmployeeId, BookingModel
+from app.modals.userModal import Accounts, EmployeeId, BookingModel, VehicleModel
 
 from app.auth.jwt_handler import signJWT
 from app.auth.jwt_bearer import jwtBearer
@@ -168,25 +168,81 @@ async def checkUser(db:Session = Depends(get_db)):
     except Exception as e:
         return e 
      
-@app.put('/approveRequest/{bookingId}')
-async def approveUserRequest(bookingId,data: approveSchema):
+@app.put('/approveRequest/{bookingId}/{vehiclNo}')
+async def approveUserRequest(bookingId,vehiclNo,data: approveSchema):
     try:
+        errCode = 0
         booking = db.session.query(BookingModel).filter(BookingModel.bookingNumber == bookingId)
-        if not booking.first():
-            return "error" 
-        booking.update({
-            "vehicleAlloted": data.vehicleAlloted,
-            "vehicleNumber": data.vehicleNumber,
-            "tripStatus": data.tripStatus,
-            "tripCanceled": data.tripCanceled,
-            "remark": data.remark
-        })
-        db.session.commit()
-        return{
-        "code":"success",
-        "message":"approval made"}
+        vehicle = db.session.query(VehicleModel).filter(VehicleModel.vehicleNumber == vehiclNo)
+        vehicleBookData = vehicle.first().bookedTime
+        bk = booking.first()
+        updateBooking = False
+        # inst = [f"{bk.tripDate}", {f"{bk.bookingNumber}":[f"{bk.startTime}",f"{bk.endTime}"]},]
+        inst = [bk.tripDate, {bk.bookingNumber:[bk.startTime,bk.endTime]},]
+        if vehicleBookData != None:
+            vehicleBookData = json.loads(vehicleBookData)
+            
+            # inst = ["16-03-2023", {"gyi":["25200","80000"]}]
+            keys = list(vehicleBookData.keys())
+            # print(keys)
+            dt = list(inst[1].keys())[0]
+            dt = inst[1][dt]
+            canInsert = 0
+            if  inst[0] in keys:
+                dataKeys = vehicleBookData[inst[0]]
+                inkeys = dataKeys.keys()
+                for j in inkeys:
+                    check = dataKeys[j]
+                    if int(check[0]) <= int(dt[0]) and (int(dt[0])+1) > int(check[1] ):
+                        canInsert = 1
+                    elif int(check[0]) >= int(dt[1]) and (int(dt[1])-1) <= int(check[1]):
+                        canInsert = 1
+                    else:
+                        canInsert = 0
+                        errCode = 904
+                        #print("Already booking for this time interval")
+                        break
+                if canInsert == 1:
+                    dataKeys[list(inst[1].keys())[0]] = dt
+                    updateBooking = True
+                    # print("Successfully approved")
+                else:
+                    updateBooking = False
+                    # print("Already booking for this time")
+            else:
+                vehicleBookData[inst[0]] = inst[1]
+                updateBooking = True
+                # print("Successfully approved")
+        else:
+            vehicleBookData = {}
+            vehicleBookData[inst[0]] = inst[1]
+            updateBooking = True    
+        # print(vehicleBookData)
+        if updateBooking:
+            # if not booking.first():
+            #     return "error" 
+            booking.update({
+                "vehicleAlloted": vehiclNo,
+                "vehicleNumber": vehicle.first().vehiclePhoneNumber,
+                "tripStatus": True,
+                "tripCanceled": False,
+                "remark": data.remark
+            })
+            try:
+                vehicle.update({
+                    "bookedTime": json.dumps(vehicleBookData)
+                    })
+            except Exception as e:
+                print(e)
+            db.session.commit()
+            # print("Booking Approved Successfully")
+            if errCode != 904:
+                return 901
+        else:
+            # print("Already booking for this time interval")
+            return 904
     except Exception as e:
-        return e
+        return 500
      
 @app.put('/rejectRequest/{bookingId}')
 async def rejectUserRequest(bookingId,data: approveSchema):
@@ -210,6 +266,33 @@ async def rejectUserRequest(bookingId,data: approveSchema):
 
 
 
+@app.post('/vehicleRegister/')
+async def user(data:vehicleSchema= Body(default =None)):
+    try:
+        db_vehicleRegister = VehicleModel(
+            vehicleNumber = data.vehicleNumber,
+            vehiclePhoneNumber = data.vehiclePhoneNumber,
+            bookedTime = data.bookedTime,
+            )
+        db.session.add(db_vehicleRegister)
+        db.session.commit()
+        return "Successfully Registered"
+    except Exception as e:
+        return 404
+
+
+@app.get("/getAllVehicles/")
+async def checkUser(db:Session = Depends(get_db)):
+    try:
+        allVehicles = db.query(VehicleModel).all()
+        if allVehicles != "null":
+            return allVehicles
+        else:
+            return 404
+        
+        
+    except Exception as e:
+        return e 
 
             
 if __name__ == "__main__":
