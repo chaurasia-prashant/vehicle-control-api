@@ -47,7 +47,6 @@ class BookingModel(Base):
     reason = Column(String)
     remark = Column(String)
     
-    # __allow_unmapped__ = True
 
 
 class VehicleModel(Base):
@@ -55,4 +54,8 @@ class VehicleModel(Base):
     vehicleNumber = Column(String, primary_key=True, index=True)
     vehiclePhoneNumber = Column(String)
     bookedTime = Column(JSON)
-    
+
+class EmailVerification(Base):
+    __tablename__ = 'Email_Verification'
+    email = Column(String, primary_key=True, index=True)
+    otp = Column(String)

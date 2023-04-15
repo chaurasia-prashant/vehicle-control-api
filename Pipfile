@@ -13,6 +13,8 @@ alembic = "*"
 psycopg2 = "*"
 python-dotenv = "*"
 fastapi-sqlalchemy = "*"
+cryptography = "*"
+fastapi-mail = {extras = ["httpx"], version = "*"}
 
 [dev-packages]
 

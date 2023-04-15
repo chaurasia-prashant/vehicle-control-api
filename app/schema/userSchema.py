@@ -1,4 +1,5 @@
-from pydantic import BaseModel, Field
+from typing import List
+from pydantic import BaseModel, EmailStr, Field
 import secrets
         
     
@@ -33,3 +34,23 @@ class UserLoginSchema(BaseModel):
     class Config:
         orm_mode = True  
         
+class EmailVerificationSchema(BaseModel):
+    email: List[EmailStr]
+    # otp: str = Field(default= None)
+    
+    class Config:
+        orm_mode = True  
+
+class verifyEmailOtp(BaseModel):
+    email: str = Field(default= None)
+    otp: str = Field(default= None)
+    
+    class Config:
+        orm_mode = True  
+        
+class updatePasswordSchema(BaseModel):
+    email: str = Field(default= None)
+    password: str = Field(default= None)
+    
+    class Config:
+        orm_mode = True 
