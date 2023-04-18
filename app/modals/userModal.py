@@ -26,6 +26,7 @@ class Accounts(Base):
 class EmployeeId(Base):
     __tablename__ = 'employeeId'
     empId = Column(String, primary_key=True, index=True, unique=True)
+    email = Column(String)
 
 
 class BookingModel(Base):

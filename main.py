@@ -3,7 +3,7 @@ import uvicorn
 import os
 import json
 import random
-from fastapi import FastAPI, Body, Depends, BackgroundTasks
+from fastapi import FastAPI, Body, Depends
 from fastapi_sqlalchemy import DBSessionMiddleware, db
 from sqlalchemy.orm import sessionmaker, Session
 from sqlalchemy.ext.declarative import declarative_base
@@ -13,16 +13,13 @@ from sqlalchemy.sql.expression import literal
 # Mail
 from fastapi_mail import ConnectionConfig, FastMail, MessageSchema, MessageType
 # Schemas
-from app.schema.userSchema import EmailVerificationSchema, UserSchema, EmployeeIdSchema, UserLoginSchema, updatePasswordSchema, verifyEmailOtp
+from app.schema.userSchema import EmailVerificationSchema, UserSchema, UserLoginSchema, updatePasswordSchema, verifyEmailOtp
 from app.schema.bookingSchema import approveSchema, vehicleBookingByUser, vehicleSchema
 # Modals
 from app.modals.userModal import Accounts, EmailVerification, EmployeeId, BookingModel, VehicleModel
 # Urls
 from urls import urls
 from app.auth.hash_passwor import hashPassword, decodeHashedPassword
-from app.auth.jwt_handler import signJWT
-from app.auth.jwt_bearer import jwtBearer
-from config import config
 from dotenv import load_dotenv
 load_dotenv()
 DB_URL = os.environ['DATABASE_URL']
@@ -100,12 +97,12 @@ def user(user: UserSchema = Body(default=None)):
             uid=user.uid
         )
         db_EmployeeIdList = EmployeeId(
-            empId=user.empId
+            empId=user.empId,
+            email = user.email
         )
         db.session.add(db_EmployeeIdList)
         db.session.add(db_accounts)
         db.session.commit()
-        print("useradd")
         return True
     except:
         return 404
@@ -161,7 +158,6 @@ async def sendOTPonEmail(userMail: EmailVerificationSchema):
             return 200
 
     except Exception as e:
-        print(e)
         return "error"
 
 
@@ -197,7 +193,6 @@ async def updatePassword(passwordRequest: updatePasswordSchema,db: Session = Dep
             db.commit()
             return 200
     except Exception as e:
-        print(e)
         return "error"
         
         
@@ -205,11 +200,6 @@ async def updatePassword(passwordRequest: updatePasswordSchema,db: Session = Dep
 async def checkUser(db: Session = Depends(get_db)):
     try:
         allId = db.query(EmployeeId).all()
-        if allId != "null":
-            print("user exist")
-        else:
-            print("not found")
-
         return allId
     except Exception as e:
         return e
@@ -250,11 +240,6 @@ async def user(userId: str):
         for booking in allBooking:
             if booking.empId == userId:
                 res.append(booking)
-        if allBooking != "null":
-            print("booking exist")
-        else:
-            print("booking not found")
-
         return res
     except Exception as e:
         return e
@@ -264,11 +249,6 @@ async def user(userId: str):
 async def checkUser(db: Session = Depends(get_db)):
     try:
         allRequest = db.query(BookingModel).all()
-        if allRequest != "null":
-            print("user exist")
-        else:
-            print("not found")
-
         return allRequest
     except Exception as e:
         return e
@@ -341,7 +321,7 @@ async def approveUserRequest(bookingId, vehiclNo, data: approveSchema):
                     "bookedTime": json.dumps(vehicleBookData)
                 })
             except Exception as e:
-                print(e)
+                pass
             db.session.commit()
             # print("Booking Approved Successfully")
             if errCode != 904:
