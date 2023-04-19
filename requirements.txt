@@ -9,3 +9,4 @@ pydantic
 SQLAlchemy
 alembic
 cryptography
+psycopg2
