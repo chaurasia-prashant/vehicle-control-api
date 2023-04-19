@@ -22,7 +22,7 @@ from urls import urls
 from app.auth.hash_passwor import hashPassword, decodeHashedPassword
 from dotenv import load_dotenv
 load_dotenv()
-DB_URL = os.environ.get('DATABASE_URL')
+DB_URL = os.environ['DATABASE_URL']
 
 app = FastAPI()
 
@@ -384,7 +384,7 @@ async def checkUser(db: Session = Depends(get_db)):
 
 
 if __name__ == "__main__":
-    uvicorn.run(app, host='0.0.0.0', port=8000)
+    uvicorn.run(app)
 
 
 # def connect():
