@@ -6,7 +6,5 @@ FastAPI-SQLAlchemy==0.2.1
 fastapi-mail
 python-dotenv
 pydantic
-sqlalchemi
+SQLalchemi
 alembic
-fastapi-sqlalchemy
-cryptography
