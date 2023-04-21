@@ -31,7 +31,7 @@ class EmployeeId(Base):
 
 class BookingModel(Base):
     __tablename__ = 'vehicle_Bookings'
-    bookingNumber = Column(String, primary_key=True, index=True)
+    bookingNumber = Column(String, primary_key=True, index=True,unique=False)
     empId = Column(String)
     empUsername = Column(String)
     userDepartment = Column(String)

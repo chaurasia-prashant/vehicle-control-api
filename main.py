@@ -239,7 +239,7 @@ async def user(userId: str):
         allBooking = db.session.query(BookingModel).all()
         for booking in allBooking:
             if booking.empId == userId:
-                res.append(booking)
+                res.append(booking) 
         return res
     except Exception as e:
         return e
@@ -249,6 +249,8 @@ async def user(userId: str):
 async def checkUser(db: Session = Depends(get_db)):
     try:
         allRequest = db.query(BookingModel).all()
+        # allRequest.sort(key="tripDate", reverse= True)
+        
         return allRequest
     except Exception as e:
         return e
@@ -410,3 +412,22 @@ if __name__ == "__main__":
 #             print(config())
 #             connection.close()
 #             print("Database connection terminated")
+
+
+
+
+
+# {
+#   "username": "Prashant Kumar Chaurasia",
+#   "email": "pkc5683@gmail.com",
+#   "password": "568300",
+#   "empId": "208448",
+#   "department": "IMD",
+#   "phoneNumber": "8005089340",
+#   "isAuthorized": true,
+#   "verifyPhoneNumber": false,
+#   "verifyEmail": true,
+#   "isOwner": false,
+#   "isAdmin": true,
+#   "uid": "string"
+# }

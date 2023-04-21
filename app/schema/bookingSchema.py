@@ -4,7 +4,7 @@ import datetime
         
     
 class vehicleBookingByUser(BaseModel):
-    bookingNumber:str = Field(default= secrets.token_urlsafe(6))
+    bookingNumber:str = Field(default= secrets.token_urlsafe(5))
     empId: str 
     empUsername: str
     userDepartment: str
