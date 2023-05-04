@@ -1,2 +1,2 @@
 # MPL-VEHICLE-CONTROL
-A website for vehicle movement in MPL.
+Api for vehicle control.
