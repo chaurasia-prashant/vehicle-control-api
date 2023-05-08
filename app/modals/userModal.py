@@ -1,4 +1,4 @@
-from sqlalchemy import Column, DateTime, ForeignKey, String, Boolean, PickleType,JSON
+from sqlalchemy import Column,String, Boolean, JSON
 from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.orm import relationship
 from sqlalchemy.sql import func
@@ -18,7 +18,7 @@ class Accounts(Base):
     isAuthorized= Column(Boolean)
     verifyPhoneNumber= Column(Boolean)
     verifyEmail= Column(Boolean)
-    isOwner= Column(Boolean)
+    isOwner= Column(String)
     isAdmin= Column(Boolean)
     uid = Column(String)
 
@@ -35,6 +35,10 @@ class BookingModel(Base):
     empId = Column(String)
     empUsername = Column(String)
     userDepartment = Column(String)
+    isGuestBooking= Column(Boolean) #Booking detail added for guest
+    guestName = Column(String) #Booking detail added for guest
+    guestMobileNumber  = Column(String) #Booking detail added for guest
+    vehicleType  = Column(String) #Booking detail added for guest
     tripDate = Column(String)
     startLocation = Column(String)
     destination = Column(String)
@@ -54,9 +58,17 @@ class VehicleModel(Base):
     __tablename__ = 'vehicle_Details'
     vehicleNumber = Column(String, primary_key=True, index=True)
     vehiclePhoneNumber = Column(String)
+    vehicleType = Column(String)
     bookedTime = Column(JSON)
+
 
 class EmailVerification(Base):
     __tablename__ = 'Email_Verification'
     email = Column(String, primary_key=True, index=True)
     otp = Column(String)
+    
+    
+class BookingsBackup(Base):
+    __tablename__ = 'booking_backup'
+    bookingMonth = Column(String, primary_key=True, index=True)
+    bookedTime = Column(JSON)

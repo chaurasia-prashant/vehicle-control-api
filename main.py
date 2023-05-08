@@ -1,4 +1,6 @@
+from datetime import datetime
 from sqlalchemy import create_engine
+from sqlmodel import SQLModel
 import uvicorn
 import os
 import json
@@ -10,13 +12,14 @@ from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.sql import exists
 from sqlalchemy import select
 from sqlalchemy.sql.expression import literal
+# Admin
 # Mail
 from fastapi_mail import ConnectionConfig, FastMail, MessageSchema, MessageType
 # Schemas
 from app.schema.userSchema import EmailVerificationSchema, UserSchema, UserLoginSchema, updatePasswordSchema, verifyEmailOtp
 from app.schema.bookingSchema import approveSchema, vehicleBookingByUser, vehicleSchema
 # Modals
-from app.modals.userModal import Accounts, EmailVerification, EmployeeId, BookingModel, VehicleModel
+from app.modals.userModal import Accounts, BookingsBackup, EmailVerification, EmployeeId, BookingModel, VehicleModel
 # Urls
 from urls import urls
 from app.auth.hash_passwor import hashPassword, decodeHashedPassword
@@ -32,6 +35,7 @@ Base = declarative_base()
 
 app.add_middleware(DBSessionMiddleware, db_url=DB_URL)
 
+# Create initialized database table
 
 def get_db():
     db = SessionLocal()
@@ -63,6 +67,7 @@ url = urls()
 #     return {"message": "hello world"}
 
 
+# Login function
 @app.post(url["login"])
 async def checkUser(loginDetail: UserLoginSchema = Body(default=None)):
     try:
@@ -77,9 +82,9 @@ async def checkUser(loginDetail: UserLoginSchema = Body(default=None)):
     except:
         return [404,"None"]
 
-
+# Signup function
 @app.post(url["signup"])
-def user(user: UserSchema = Body(default=None)):
+def signup(user: UserSchema = Body(default=None)):
     try:
         userPassword = hashPassword(user.password)
         db_accounts = Accounts(
@@ -107,7 +112,7 @@ def user(user: UserSchema = Body(default=None)):
     except:
         return 404
 
-
+# Get and verify user in database
 def userInDatabase(data: UserLoginSchema):
     try:
         user = db.session.scalars(
@@ -119,7 +124,7 @@ def userInDatabase(data: UserLoginSchema):
     except Exception as e:
         return [False, e]
 
-
+# Send email for email verification
 @app.post(url["sendEmailOTP"])
 async def sendOTPonEmail(userMail: EmailVerificationSchema):
     try:
@@ -160,7 +165,7 @@ async def sendOTPonEmail(userMail: EmailVerificationSchema):
     except Exception as e:
         return "error"
 
-
+# Verify otp for email verification
 @app.post(url["verifyEmailOTP"])
 async def verifyOTPonEmail(userMail: verifyEmailOtp, db: Session = Depends(get_db)):
     try:
@@ -179,6 +184,8 @@ async def verifyOTPonEmail(userMail: verifyEmailOtp, db: Session = Depends(get_d
     except:
         return 405
 
+
+# Update password of a user
 @app.post(url["updatePassword"])
 async def updatePassword(passwordRequest: updatePasswordSchema,db: Session = Depends(get_db)):
     try:
@@ -195,9 +202,9 @@ async def updatePassword(passwordRequest: updatePasswordSchema,db: Session = Dep
     except Exception as e:
         return "error"
         
-        
+# Get all registered IDs
 @app.get(url["allId"])
-async def checkUser(db: Session = Depends(get_db)):
+async def getAllId(db: Session = Depends(get_db)):
     try:
         allId = db.query(EmployeeId).all()
         return allId
@@ -205,13 +212,18 @@ async def checkUser(db: Session = Depends(get_db)):
         return e
 
 
+
+# Book a vehicle
 @app.post(url["vehicleBooking"])
-async def user(data: vehicleBookingByUser = Body(default=None)):
+async def vehicleBooking(data: vehicleBookingByUser = Body(default=None)):
     try:
         db_vehicleBooking = BookingModel(
             empId=data.empId,
             empUsername=data.empUsername,
             userDepartment=data.userDepartment,
+            isGuestBooking=data.isGuestBooking,
+            guestName=data.guestName,
+            guestMobileNumber=data.guestMobileNumber,
             tripDate=data.tripDate,
             startLocation=data.startLocation,
             destination=data.destination,
@@ -231,9 +243,9 @@ async def user(data: vehicleBookingByUser = Body(default=None)):
     except Exception as e:
         return e
 
-
+# Get all user bookings
 @app.get(url["userBookings"] + '{userId}/')
-async def user(userId: str):
+async def getUserBookings(userId: str):
     try:
         res = []
         allBooking = db.session.query(BookingModel).all()
@@ -244,9 +256,9 @@ async def user(userId: str):
     except Exception as e:
         return e
 
-
+# Get  all bookings
 @app.get(url["allBookingRequests"])
-async def checkUser(db: Session = Depends(get_db)):
+async def getAllBooking(db: Session = Depends(get_db)):
     try:
         allRequest = db.query(BookingModel).all()
         # allRequest.sort(key="tripDate", reverse= True)
@@ -256,6 +268,7 @@ async def checkUser(db: Session = Depends(get_db)):
         return e
 
 
+# Approve a booking request
 @app.put(url["approveRequest"]+'{bookingId}/{vehiclNo}')
 async def approveUserRequest(bookingId, vehiclNo, data: approveSchema):
     try:
@@ -334,7 +347,7 @@ async def approveUserRequest(bookingId, vehiclNo, data: approveSchema):
     except Exception as e:
         return 500
 
-
+# Reject a user request
 @app.put(url["rejectRequest"]+'{bookingId}')
 async def rejectUserRequest(bookingId, data: approveSchema):
     try:
@@ -356,13 +369,14 @@ async def rejectUserRequest(bookingId, data: approveSchema):
     except Exception as e:
         return e
 
-
+# Register a vehical
 @app.post(url["vehicleRegister"])
-async def user(data: vehicleSchema = Body(default=None)):
+async def vehicleRegister(data: vehicleSchema = Body(default=None)):
     try:
         db_vehicleRegister = VehicleModel(
             vehicleNumber=data.vehicleNumber,
             vehiclePhoneNumber=data.vehiclePhoneNumber,
+            vehicleType = data.vehicleType,
             bookedTime=data.bookedTime,
         )
         db.session.add(db_vehicleRegister)
@@ -371,7 +385,7 @@ async def user(data: vehicleSchema = Body(default=None)):
     except Exception as e:
         return 404
 
-
+# Get all registered vehicle
 @app.get(url["getAllVehicles"])
 async def checkUser(db: Session = Depends(get_db)):
     try:
@@ -384,7 +398,59 @@ async def checkUser(db: Session = Depends(get_db)):
     except Exception as e:
         return e
 
+        
+# Backup booking data    
 
+@app.get("/backupBookings")
+async def backupBookings():
+    try:
+        allRequest = db.session.query(VehicleModel).all()
+        cmy = f"{datetime.now().month}-{datetime.now().year}"
+        res = {}
+        for i in allRequest:
+            bkt = json.loads(i.bookedTime)
+            for j in list(bkt.keys()):
+                dt = datetime.strptime(j,"%Y-%m-%d")
+                dt = f"{dt.date().month}-{dt.date().year}"
+                if cmy != dt:
+                    if dt not in res.keys():
+                        res[dt] = {}
+                    if i.vehicleNumber not in res[dt].keys():
+                        res[dt][i.vehicleNumber] = {}
+                    
+                    res[dt][i.vehicleNumber].update({j: bkt[j]})
+                    del bkt[j]
+                    i.bookedTime = json.dumps(bkt)
+        for i in res:
+            backup = db.session.query(BookingsBackup).filter(BookingsBackup.bookingMonth == i)
+            if not backup.first():
+                data = BookingsBackup(
+                    bookingMonth = i,
+                    bookedTime = json.dumps(res[i])
+                )
+                db.session.add(data)
+                db.session.commit()
+            else:
+                backup.update({
+                    "bookedTime" : json.dumps(res[i])
+                })   
+                db.session.commit()
+                
+        for i in allRequest:
+            updateRequest = db.session.query(VehicleModel).filter(VehicleModel.vehicleNumber == i.vehicleNumber)
+            updateRequest.update({
+                "bookedTime": i.bookedTime
+            })
+            db.session.commit()
+        
+            
+        return "Successfully backup done"
+            
+    except Exception as e:
+        return e
+
+
+# Main function
 if __name__ == "__main__":
     uvicorn.run(app, host='0.0.0.0', port=8000)
 

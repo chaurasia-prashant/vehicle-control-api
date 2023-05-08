@@ -4,6 +4,7 @@ PyJWT==1.7.1
 python-decouple==3.3
 FastAPI-SQLAlchemy==0.2.1
 fastapi-mail
+fastapi-admin
 python-dotenv
 pydantic
 SQLAlchemy

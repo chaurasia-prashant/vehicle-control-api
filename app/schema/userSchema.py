@@ -13,7 +13,7 @@ class UserSchema(BaseModel):
     isAuthorized: bool= Field(default= False)
     verifyPhoneNumber:bool= Field(default= False)
     verifyEmail:bool= Field(default= False)
-    isOwner: bool= Field(default= False)
+    isOwner: str
     isAdmin:bool= Field(default= False)
     uid: str
     
