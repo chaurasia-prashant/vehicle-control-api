@@ -13,6 +13,11 @@ def urls():
         "sendEmailOTP"  : "/api/mpl_VM/sendEmailOTP/",
         "verifyEmailOTP"  : "/api/mpl_VM/verifyEmailOTP/",
         "updatePassword" : "/api/mpl_VM/updatePassword/",
-        
+        "backupBooking" : "/api/mpl_VM/backupBooking/",
+        "getBookingDump" : "/api/mpl_VM/getBookingDump/",
+        "assignRole" : "/api/mpl_VM/assignRole/",
+        "roleReject" : "/api/mpl_VM/roleReject/",
+        "addAdmin" : "/api/mpl_VM/addAdmin/",
+        "removeAdmin" : "/api/mpl_VM/removeAdmin/",
     }
     return data

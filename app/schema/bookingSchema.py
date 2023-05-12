@@ -11,7 +11,7 @@ class vehicleBookingByUser(BaseModel):
     isGuestBooking: bool= Field(default= False)  #Booking detail added for guest
     guestName: str  #Booking detail added for guest
     guestMobileNumber : str  #Booking detail added for guest
-    vehicleType : str = Field(default=None) #Select for departmental or admin approval
+    vehicleType : str  #Select for departmental or admin approval
     tripDate: str= Field(default= None)
     startLocation: str= Field(default= None)
     destination: str= Field(default= None)
@@ -61,3 +61,9 @@ class bookingBackupSchema(BaseModel):
     class Config:
         orm_mode = True    
         
+
+class bookingDumpSchema(BaseModel):
+    backupDate: str = Field(default=None)
+
+    class Config:
+        orm_mode = True   

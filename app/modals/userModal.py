@@ -38,7 +38,7 @@ class BookingModel(Base):
     isGuestBooking= Column(Boolean) #Booking detail added for guest
     guestName = Column(String) #Booking detail added for guest
     guestMobileNumber  = Column(String) #Booking detail added for guest
-    vehicleType  = Column(String) #Booking detail added for guest
+    vehicleType  = Column(String) #Booking detail for departmental booking
     tripDate = Column(String)
     startLocation = Column(String)
     destination = Column(String)

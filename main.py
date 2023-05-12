@@ -17,7 +17,7 @@ from sqlalchemy.sql.expression import literal
 from fastapi_mail import ConnectionConfig, FastMail, MessageSchema, MessageType
 # Schemas
 from app.schema.userSchema import EmailVerificationSchema, UserSchema, UserLoginSchema, updatePasswordSchema, verifyEmailOtp
-from app.schema.bookingSchema import approveSchema, vehicleBookingByUser, vehicleSchema
+from app.schema.bookingSchema import approveSchema, bookingDumpSchema, vehicleBookingByUser, vehicleSchema
 # Modals
 from app.modals.userModal import Accounts, BookingsBackup, EmailVerification, EmployeeId, BookingModel, VehicleModel
 # Urls
@@ -221,6 +221,7 @@ async def vehicleBooking(data: vehicleBookingByUser = Body(default=None)):
             empId=data.empId,
             empUsername=data.empUsername,
             userDepartment=data.userDepartment,
+            vehicleType = data.vehicleType,
             isGuestBooking=data.isGuestBooking,
             guestName=data.guestName,
             guestMobileNumber=data.guestMobileNumber,
@@ -401,54 +402,156 @@ async def checkUser(db: Session = Depends(get_db)):
         
 # Backup booking data    
 
-@app.get("/backupBookings")
+@app.post(url["backupBooking"])
 async def backupBookings():
     try:
         allRequest = db.session.query(VehicleModel).all()
-        cmy = f"{datetime.now().month}-{datetime.now().year}"
+        cmy = datetime.today()
+        cmy = cmy.strftime('%m-%Y')
         res = {}
         for i in allRequest:
-            bkt = json.loads(i.bookedTime)
-            for j in list(bkt.keys()):
-                dt = datetime.strptime(j,"%Y-%m-%d")
-                dt = f"{dt.date().month}-{dt.date().year}"
-                if cmy != dt:
-                    if dt not in res.keys():
-                        res[dt] = {}
-                    if i.vehicleNumber not in res[dt].keys():
-                        res[dt][i.vehicleNumber] = {}
-                    
-                    res[dt][i.vehicleNumber].update({j: bkt[j]})
-                    del bkt[j]
-                    i.bookedTime = json.dumps(bkt)
-        for i in res:
-            backup = db.session.query(BookingsBackup).filter(BookingsBackup.bookingMonth == i)
-            if not backup.first():
-                data = BookingsBackup(
-                    bookingMonth = i,
-                    bookedTime = json.dumps(res[i])
-                )
-                db.session.add(data)
-                db.session.commit()
-            else:
-                backup.update({
-                    "bookedTime" : json.dumps(res[i])
-                })   
-                db.session.commit()
-                
+            if i.bookedTime != None:
+                bkt = json.loads(i.bookedTime)
+                for j in list(bkt.keys()):
+                    dt = datetime.strptime(j,"%Y-%m-%d")
+                    dt = dt.strftime('%m-%Y')
+                    if cmy != dt:
+                        if dt not in res.keys():
+                            res[dt] = {}
+                        if i.vehicleNumber not in res[dt].keys():
+                            res[dt][i.vehicleNumber] = {}
+                        
+                        res[dt][i.vehicleNumber].update({j: bkt[j]})
+                        del bkt[j]
+                        i.bookedTime = json.dumps(bkt)
+        if res != {}:
+            for i in res:
+                backup = db.session.query(BookingsBackup).filter(BookingsBackup.bookingMonth == i)
+                if not backup.first():
+                    data = BookingsBackup(
+                        bookingMonth = i,
+                        bookedTime = json.dumps(res[i])
+                    )
+                    db.session.add(data)
+                    db.session.commit()
+                else:
+                    backup.update({
+                        "bookedTime" : json.dumps(res[i])
+                    })   
+                    db.session.commit()    
         for i in allRequest:
             updateRequest = db.session.query(VehicleModel).filter(VehicleModel.vehicleNumber == i.vehicleNumber)
             updateRequest.update({
                 "bookedTime": i.bookedTime
             })
-            db.session.commit()
-        
+            db.session.commit() 
             
         return "Successfully backup done"
             
     except Exception as e:
         return e
 
+
+@app.post(url["getBookingDump"])
+async def getBookingDump(data : bookingDumpSchema):
+    try:
+        dt = datetime.today().replace(day=1)
+        dt = dt.strftime('%m-%Y')
+        if data.backupDate != dt:
+            dump = db.session.scalars(
+            select(BookingsBackup).where(BookingsBackup.bookingMonth == data.backupDate)).first()
+            return [200,dump]
+        else:
+            allRequest = db.session.query(VehicleModel).all()
+            cmy = data.backupDate
+            res = {}
+            for i in allRequest:
+                if i.bookedTime != None:
+                    bkt = json.loads(i.bookedTime)
+                    for j in list(bkt.keys()):
+                        dt = datetime.strptime(j,"%Y-%m-%d")
+                        dt = dt.strftime('%m-%Y')
+                        if cmy == dt:
+                            if dt not in res.keys():
+                                res[dt] = {}
+                            if i.vehicleNumber not in res[dt].keys():
+                                res[dt][i.vehicleNumber] = {}
+                            res[dt][i.vehicleNumber].update({j: bkt[j]})
+                            del bkt[j]
+                            i.bookedTime = json.dumps(bkt)
+            return [200,res]
+            
+    except Exception as e:
+        return 404
+
+
+@app.post(url["assignRole"]+'{id}')
+def assignRole(id):
+    try:
+        user = db.session.query(Accounts).filter(
+            Accounts.empId == id)
+    
+        if user.first():
+            user.update({
+                "isOwner" : True
+            })
+            db.session.commit()
+            return 200
+        else:
+            return 204
+    except Exception as e:
+        return e
+    
+@app.post(url["roleReject"]+'{id}')
+def rejectRole(id):
+    try:
+        user = db.session.query(Accounts).filter(
+            Accounts.empId == id)
+    
+        if user.first():
+            user.update({
+                "isOwner" : False
+            })
+            db.session.commit()
+            return 200
+        else:
+            return 204
+    except Exception as e:
+        return e
+
+@app.post(url["addAdmin"]+'{id}')
+def addAdmin(id):
+    try:
+        user = db.session.query(Accounts).filter(
+            Accounts.empId == id)
+    
+        if user.first():
+            user.update({
+                "isAdmin" : True
+            })
+            db.session.commit()
+            return 200
+        else:
+            return 204
+    except Exception as e:
+        return e 
+    
+@app.post(url["removeAdmin"]+'{id}')
+def removeAdmin(id):
+    try:
+        user = db.session.query(Accounts).filter(
+            Accounts.empId == id)
+    
+        if user.first():
+            user.update({
+                "isAdmin" : False
+            })
+            db.session.commit()
+            return 200
+        else:
+            return 204
+    except Exception as e:
+        return e
 
 # Main function
 if __name__ == "__main__":
