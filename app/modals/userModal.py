@@ -18,7 +18,7 @@ class Accounts(Base):
     isAuthorized= Column(Boolean)
     verifyPhoneNumber= Column(Boolean)
     verifyEmail= Column(Boolean)
-    isOwner= Column(String)
+    isOwner= Column(Boolean)
     isAdmin= Column(Boolean)
     uid = Column(String)
 

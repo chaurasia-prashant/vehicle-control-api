@@ -163,6 +163,7 @@ async def sendOTPonEmail(userMail: EmailVerificationSchema):
             return 200
 
     except Exception as e:
+        print(e)
         return "error"
 
 # Verify otp for email verification
@@ -221,10 +222,10 @@ async def vehicleBooking(data: vehicleBookingByUser = Body(default=None)):
             empId=data.empId,
             empUsername=data.empUsername,
             userDepartment=data.userDepartment,
-            vehicleType = data.vehicleType,
             isGuestBooking=data.isGuestBooking,
             guestName=data.guestName,
             guestMobileNumber=data.guestMobileNumber,
+            vehicleType = data.vehicleType,
             tripDate=data.tripDate,
             startLocation=data.startLocation,
             destination=data.destination,
@@ -242,6 +243,7 @@ async def vehicleBooking(data: vehicleBookingByUser = Body(default=None)):
         db.session.add(db_vehicleBooking)
         db.session.commit()
     except Exception as e:
+        print(e)
         return e
 
 # Get all user bookings
@@ -482,6 +484,7 @@ async def getBookingDump(data : bookingDumpSchema):
             return [200,res]
             
     except Exception as e:
+        print(e)
         return 404
 
 
